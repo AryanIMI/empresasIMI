@@ -1,0 +1,5 @@
+{
+  "name": "Municipality Tech Contract Analyzer",
+  "description": "Automated research system for Brazilian municipal transparency portals to identify technology contracts and commercial opportunities.",
+  "requestFramePermissions": []
+}
