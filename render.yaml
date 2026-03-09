@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: monitoramento-empresas
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm run dev
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: APP_URL
+        fromService:
+          type: web
+          name: monitoramento-empresas
+          property: host
