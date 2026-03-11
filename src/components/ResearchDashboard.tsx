@@ -90,6 +90,18 @@ export default function ResearchDashboard() {
                 }),
                 new TableRow({
                   children: [
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Classificação Comercial", bold: true })] })] }),
+                    new TableCell({ children: [new Paragraph(result.commercial_classification || "N/A")] }),
+                  ],
+                }),
+                new TableRow({
+                  children: [
+                    new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Concorrente", bold: true })] })] }),
+                    new TableCell({ children: [new Paragraph(result.competitor || "N/A")] }),
+                  ],
+                }),
+                new TableRow({
+                  children: [
                     new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: "Link", bold: true })] })] }),
                     new TableCell({ children: [new Paragraph(result.document_link || "N/A")] }),
                   ],
@@ -321,13 +333,24 @@ export default function ResearchDashboard() {
                         <div className="font-bold">{result.contract_value || 'N/A'}</div>
                         <div className="opacity-50">{result.contract_date}</div>
                       </div>
-                      <div className="flex items-center">
+                      <div className="flex flex-col justify-center items-start gap-1">
                         <span className={`text-[10px] font-mono uppercase flex items-center gap-1 ${
                           result.status.toLowerCase().includes('vigente') ? 'text-green-600' : 'text-orange-600'
                         }`}>
                           {result.status.toLowerCase().includes('vigente') ? <CheckCircle2 size={10} /> : <AlertCircle size={10} />}
                           {result.status}
                         </span>
+                        {result.commercial_classification && (
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-bold mt-1 tracking-wider ${
+                            result.commercial_classification === 'CLIENTE ATUAL' ? 'bg-blue-100 text-blue-700 border border-blue-200' :
+                            result.commercial_classification === 'CLIENTE DE CONCORRENTE' ? 'bg-red-100 text-red-700 border border-red-200' :
+                            result.commercial_classification === 'OPORTUNIDADE ALTA' ? 'bg-emerald-100 text-emerald-700 border border-emerald-200' :
+                            result.commercial_classification === 'OPORTUNIDADE NOVA' ? 'bg-purple-100 text-purple-700 border border-purple-200' :
+                            'bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}>
+                            {result.commercial_classification}
+                          </span>
+                        )}
                       </div>
                       <div className="flex justify-end items-center">
                         {result.document_link && (
@@ -352,6 +375,12 @@ export default function ResearchDashboard() {
                           <div className="bg-[#141414]/5 p-4 border border-[#141414]/10">
                             <h4 className="font-serif italic text-[10px] uppercase opacity-50 mb-2">Análise de Oportunidade</h4>
                             <p className="text-xs font-mono leading-relaxed">{result.opportunity_analysis}</p>
+                            {result.competitor && result.competitor !== 'N/A' && result.competitor.trim() !== '' && (
+                              <div className="mt-3 pt-3 border-t border-[#141414]/10">
+                                <h4 className="font-serif italic text-[10px] uppercase text-red-600 mb-1">Concorrente Identificado</h4>
+                                <p className="text-xs font-bold text-red-700">{result.competitor}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>

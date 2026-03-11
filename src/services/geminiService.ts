@@ -15,33 +15,47 @@ const PARTNER_COMPANIES = [
 
 export async function performResearch(municipality: string, state: string): Promise<{ results: ResearchResult[], sources: { uri: string, title: string }[] }> {
   const prompt = `
-    VOCÊ É UM ESPECIALISTA EM INTELIGÊNCIA DE MERCADO E LICITAÇÕES PÚBLICAS NO BRASIL.
-    Sua missão é realizar uma varredura técnica e precisa no município de ${municipality} - ${state}.
+    Você é um agente especializado em inteligência comercial para o setor público brasileiro.
+    Sua missão é realizar uma varredura técnica e precisa no município de ${municipality} - ${state} para identificar oportunidades comerciais.
 
-    ESTRATÉGIA DE PESQUISA (GROUNDING):
-    1. Identifique o Portal de Transparência oficial do município.
-    2. Consulte o PNCP (Portal Nacional de Contratações Públicas) para registros recentes.
-    3. Busque em Diários Oficiais do Município e do Estado.
-    4. Procure especificamente por: "Contratos de Software", "Licitações de Tecnologia", "Ata de Registro de Preços", "Dispensa de Licitação".
+    OBJETIVO PRINCIPAL:
+    Identificar se o município:
+    1. Possui contratos vigentes relacionados às soluções das empresas parceiras.
+    2. Já contratou soluções semelhantes no passado.
+    3. Possui contratos próximos do vencimento.
+    4. Não possui soluções semelhantes (oportunidade de venda).
 
-    FOCO NAS EMPRESAS PARCEIRAS (OU CONCORRENTES DIRETOS):
-    - Gestão Pública: Betha Sistemas (ou concorrentes como IPM, Fiorilli, Elotech).
-    - Conectividade/M2M: Arqia (ou concorrentes como Vivo Empresas, Claro, Link Solutions).
-    - Resíduos: Contelurb (ou concorrentes como Solurb, Vega, Estre).
-    - Educação: Saber Soluções (ou concorrentes como Positivo, FTD, Pearson).
-    - Inclusão Digital: Datami (ou concorrentes como Mobicare).
-    - Segurança: Sistema IRIS, Cidade Segura (ou concorrentes como Genetec, Milestone, Hikvision).
+    EMPRESAS, ÁREAS E SOLUÇÕES ALVO:
+    1. Betha Sistemas (Gestão Pública): ERP público, folha de pagamento, RH, educação, saúde, processos digitais. (Concorrentes: IPM, Fiorilli, Elotech)
+    2. Arqia (Conectividade e IoT): Chips M2M, sensores urbanos, telemetria, rastreamento, cidades inteligentes. (Concorrentes: Vivo, Claro)
+    3. Contelurb (Limpeza Urbana): Conteinerização de lixo, coleta mecanizada, ecopontos, gestão de resíduos. (Concorrentes: Solurb, Vega, Estre)
+    4. Saber Soluções Educacionais (Educação): Sistemas de ensino, material estruturado, plataformas, foco em SAEB/IDEB. (Concorrentes: Positivo, FTD, Pearson)
+    5. Datami (Inclusão Digital): Dados patrocinados, apps públicos com internet grátis. (Concorrentes: Mobicare)
+    6. Sistema IRIS/Cidade Segura (Segurança): Videomonitoramento, reconhecimento facial, LPR, cercamento digital, despacho de viaturas. (Concorrentes: Genetec, Milestone)
 
-    CRITÉRIOS DE ACERTIVIDADE:
-    - VALORES: Extraia o valor exato do contrato. Se for valor global, especifique.
-    - VIGÊNCIA: Identifique a data de início e fim. Contratos vencendo em menos de 6 meses são PRIORIDADE ALTA.
-    - OBJETO: Seja técnico na descrição. Não diga apenas "software", diga "Sistema de Gestão Tributária e Nota Fiscal Eletrônica".
-    - LINKS: O document_link deve ser o link direto para a página do contrato ou o PDF. Se não encontrar o PDF, use a página de detalhes da licitação.
+    FONTES DE PESQUISA OBRIGATÓRIAS (VIA GOOGLE SEARCH):
+    - Portal de Transparência do Município
+    - Portal Nacional de Contratações Públicas (PNCP)
+    - Diário Oficial do Município/Estado
+    - Buscar por: "Contratos de Software", "Dispensa de Licitação", "Ata de Registro de Preços".
 
-    REGRAS DE OURO:
-    - Se não encontrar um contrato de uma parceira, você DEVE listar o contrato do CONCORRENTE atual para que possamos planejar a substituição.
-    - NUNCA invente dados. Se não encontrar o valor, coloque "Valor não localizado no portal".
-    - LINKS DO PNCP: O formato correto é https://pncp.gov.br/app/contratos/{CNPJ}/{ANO}/{NUMERO}. NUNCA use hífens ou formatos como "contratos/ID-ANO". Use APENAS a URL exata que você copiou do resultado da busca.
+    CRITÉRIOS DE ANÁLISE E PRIORIDADE:
+    Analise e foque em resultados que demonstrem:
+    - Contratos próximos do vencimento (Prioridade Alta).
+    - Cidades com investimentos recentes em tecnologia.
+    - Classifique o cenário comercial em commercial_classification:
+      * "CLIENTE ATUAL" se já utiliza nossa parceira (ex: Betha, Arqia, etc)
+      * "CLIENTE DE CONCORRENTE" se utiliza rival (IPM, Vivo, etc)
+      * "CONTRATO ENCERRADO" se já utilizou no passado mas não tem vigente
+      * "OPORTUNIDADE NOVA" se não há registros
+      * "OPORTUNIDADE ALTA" se tem contrato perto do fim
+
+    REGRAS CRÍTICAS PARA LINKS E DADOS (ANTI-ALUCINAÇÃO):
+    1. QUANTIDADE: Retorne de 10 a 12 resultados reais e confirmados.
+    2. DATA E VALOR: Extraia a vigência correta e valor.
+    3. PROIBIDO INVENTAR LINKS: Nunca deduza ou crie links fakes. O link TEM que existir.
+    4. FONTE REAL: Use EXCLUSIVAMENTE os links reportados diretamente pela pesquisa. Se não achar o Diário Oficial/PDF, retorne o link da notícia.
+    5. LINKS DO PNCP: Use apenas URLs reais do tipo https://pncp.gov.br/app/contratos/{CNPJ}/{ANO}/{NUMERO}.
   `;
 
   const response = await ai.models.generateContent({
@@ -58,17 +72,19 @@ export async function performResearch(municipality: string, state: string): Prom
           properties: {
             municipality: { type: Type.STRING },
             state: { type: Type.STRING },
-            contract_type: { type: Type.STRING, description: "Ex: Contrato, Ata de Registro de Preços, Dispensa" },
-            company: { type: Type.STRING, description: "Nome da empresa contratada" },
-            solution_area: { type: Type.STRING, description: "Área técnica da solução" },
-            contract_date: { type: Type.STRING, description: "Data de assinatura ou vigência" },
-            contract_value: { type: Type.STRING, description: "Valor total do contrato" },
-            status: { type: Type.STRING, description: "Vigente, Encerrado ou Em Licitação" },
-            document_link: { type: Type.STRING, description: "URL direta e verificada" },
-            description: { type: Type.STRING, description: "Descrição técnica do objeto contratado" },
-            opportunity_analysis: { type: Type.STRING, description: "Análise estratégica: por que abordar este cliente agora?" },
+            contract_type: { type: Type.STRING, description: "Ex: Contrato, Ata de Registro de Preços, Dispensa, ou N/A" },
+            company: { type: Type.STRING, description: "Nome da empresa parceira foco desta oportunidade (Betha, Arqia...)" },
+            solution_area: { type: Type.STRING, description: "Área técnica da solução (Gestão, Educação, Segurança...)" },
+            contract_date: { type: Type.STRING, description: "Data de assinatura, vigência ou vencimento" },
+            contract_value: { type: Type.STRING, description: "Valor total encontrado" },
+            status: { type: Type.STRING, description: "Vigente, Encerrado, Em Licitação, N/A" },
+            document_link: { type: Type.STRING, description: "URL direta e verificada da fonte" },
+            description: { type: Type.STRING, description: "Justificativa/Descrição técnica" },
+            opportunity_analysis: { type: Type.STRING, description: "Por que abordar este cliente? Qual a estratégia (alta/média/baixa)?" },
+            commercial_classification: { type: Type.STRING, description: "CLIENTE ATUAL, CLIENTE DE CONCORRENTE, CONTRATO ENCERRADO, OPORTUNIDADE ALTA, OPORTUNIDADE NOVA" },
+            competitor: { type: Type.STRING, description: "Nome da empresa concorrente caso commercial_classification for CLIENTE DE CONCORRENTE. Senão vazio." }
           },
-          required: ["municipality", "state", "company", "solution_area", "document_link", "opportunity_analysis"]
+          required: ["municipality", "state", "company", "solution_area", "document_link", "opportunity_analysis", "commercial_classification"]
         }
       }
     }

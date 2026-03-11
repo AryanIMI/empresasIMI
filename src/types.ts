@@ -12,6 +12,8 @@ export interface ResearchResult {
   document_link: string;
   description: string;
   opportunity_analysis: string;
+  commercial_classification?: string;
+  competitor?: string;
 }
 
 export interface GroundingSource {

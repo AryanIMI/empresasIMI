@@ -33,6 +33,8 @@ db.exec(`
     document_link TEXT,
     description TEXT,
     opportunity_analysis TEXT,
+    commercial_classification TEXT,
+    competitor TEXT,
     FOREIGN KEY(task_id) REFERENCES research_tasks(id)
   );
 
@@ -97,8 +99,9 @@ async function startServer() {
       INSERT INTO research_results (
         task_id, municipality, state, contract_type, company, 
         solution_area, contract_date, contract_value, status, 
-        document_link, description, opportunity_analysis
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        document_link, description, opportunity_analysis,
+        commercial_classification, competitor
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertSource = db.prepare(`
@@ -111,7 +114,8 @@ async function startServer() {
           task_id, result.municipality, result.state, result.contract_type, 
           result.company, result.solution_area, result.contract_date, 
           result.contract_value, result.status, result.document_link, 
-          result.description, result.opportunity_analysis
+          result.description, result.opportunity_analysis,
+          result.commercial_classification, result.competitor
         );
       }
       if (srcData) {
